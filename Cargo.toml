@@ -1,0 +1,10 @@
+[package]
+name = "gdal-traits"
+version = "0.1.0"
+edition = "2021"
+
+[package]
+publish = false
+
+[dependencies]
+gdal = "0.17.1"
