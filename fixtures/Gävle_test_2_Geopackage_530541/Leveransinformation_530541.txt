@@ -1,0 +1,28 @@
+﻿Information om beställning 
+-----------------------------------------
+Namn på beställning: Gävle_test_2_GeoPackage_530541.zip
+Beställningsdatum: 2025-01-14 17:42
+Betraktelsedatum: 2025-01-14
+Format: GeoPackage
+Koordinatsystem: EPSG:3006 SWEREF-99-TM
+
+Område:
+Gävle
+
+Dataprodukter 
+-----------------------------------------
+Hastighetsgräns
+Vägbredd
+Vägtrafiknät
+Referensnätet Väg Link
+Referensnätet Väg LinkSequence
+Referensnätet Väg Node
+
+Övrig information 
+-----------------------------------------
+Vid beställning av referensnät i följer tre lager med som beskriver hela nätet:
+- Net_xxx_Link
+- Net_xxx_Linksequence (filtrerat efter betraktelsedatum)
+- Net_xxx_Node (filtrerat efter betraktelsedatum)
+
+

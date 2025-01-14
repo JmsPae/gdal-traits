@@ -1,14 +1,20 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+pub use feature::FeatureTrait;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+use gdal::errors::GdalError;
+use gdal::vector::Geometry;
+use thiserror::Error;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+mod dataset;
+mod feature;
+
+#[derive(Error, Debug, Clone)]
+pub enum GdalTraitError {
+    #[error("GDAL Error: {0}")]
+    GdalError(#[from] GdalError),
+    #[error("GDAL Trait error: Field is NULL")]
+    NullField,
+    #[error("GDAL Trait error: Invalid FieldValue: {0}")]
+    InvalidFieldValue(String),
+    #[error("GDAL Trait error: Invalid Geometry: {0:?}")]
+    InvalidGeometry(Geometry),
 }
