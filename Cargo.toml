@@ -6,9 +6,12 @@ publish = false
 
 [dependencies]
 chrono = "0.4.26"
-gdal = { git = "https://github.com/georust/gdal.git", rev = "de43096a21845b5af4468c4280d1314df01ee4a2" }
+gdal = { git = "https://github.com/georust/gdal.git" }
 paste = "1.0.15"
 thiserror = "2.0"
 
 [dev-dependencies]
 geo-types = "0.7.15"
+
+[[example]]
+name = "from_layer"

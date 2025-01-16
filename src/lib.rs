@@ -1,10 +1,8 @@
-pub use feature::FeatureTrait;
+pub use feature::{FieldResult, FromFeature};
 
 use gdal::errors::GdalError;
-use gdal::vector::Geometry;
 use thiserror::Error;
 
-mod dataset;
 mod feature;
 
 #[derive(Error, Debug, Clone)]
@@ -15,6 +13,4 @@ pub enum GdalTraitError {
     NullField,
     #[error("GDAL Trait error: Invalid FieldValue: {0}")]
     InvalidFieldValue(String),
-    #[error("GDAL Trait error: Invalid Geometry: {0:?}")]
-    InvalidGeometry(Geometry),
 }

@@ -2,6 +2,7 @@ use std::error::Error;
 
 use chrono::{DateTime, FixedOffset, NaiveDate};
 use gdal::errors::GdalError;
+use gdal::spatial_ref::SpatialRef;
 use gdal::vector::{Feature, FieldValue, Geometry, Layer, LayerAccess};
 use paste::paste;
 
@@ -19,7 +20,9 @@ pub enum FieldResult<E: Error + Clone> {
     Error(E),
 }
 
-impl From<Result<Option<FieldValue>, GdalError>> for FieldResult<GdalTraitError> {
+impl<E: Error + From<GdalError> + Clone> From<Result<Option<FieldValue>, GdalError>>
+    for FieldResult<E>
+{
     fn from(value: Result<Option<FieldValue>, GdalError>) -> Self {
         match value {
             Ok(field) => match field {
@@ -106,40 +109,47 @@ impl FieldResult<GdalTraitError> {
     try_into!(date_time, DateTime<FixedOffset>, DateTimeValue);
 }
 
-pub trait FeatureTrait<const N: usize, E>
+pub trait FromFeature<const N: usize, E>
 where
     Self: Sized,
     E: Error + From<GdalTraitError>,
 {
     const NUM_FIELDS: usize = N;
 
-    /// Desired fields from the layer.
+    /// Desired fields from the input layer.
     const FIELDS: [&'static str; N];
+
+    const SRS: Option<SpatialRef> = None;
 
     /// 'Read' fields, geometry, etc. from the source Feature.
     ///
-    /// Called by from_feature and from_layer.
+    /// Called by [`FromFeature::from_feature`] and [`FromFeature::from_layer`].
     fn read(
         fid: Option<u64>,
         fields: [FieldResult<GdalTraitError>; N],
         geometry: Option<&Geometry>,
     ) -> Result<Self, E>;
 
+    /// Convert a single [`Feature`].
+    ///
+    /// This might be needed in some situations, but sub-optimal performance-wise compared to
+    /// [`FromFeature::from_layer`].
     fn from_feature(feature: Feature) -> Result<Self, E> {
         let fields: [FieldResult<GdalTraitError>; N] = Self::FIELDS
             .into_iter()
-            .map(|fname| feature.field_index(fname))
-            .map(|index| match index {
-                Ok(index) => feature.field(index).into(),
+            .map(|feat_name| feature.field_index(feat_name))
+            .map(|idx_res| match idx_res {
+                Ok(idx) => feature.field(idx).into(),
                 Err(e) => FieldResult::Error(e.into()),
             })
             .collect::<Vec<FieldResult<_>>>()
             .try_into()
             .unwrap();
 
-        Ok(Self::read(feature.fid(), fields, feature.geometry())?)
+        Self::read(feature.fid(), fields, feature.geometry())
     }
 
+    /// Reads an entire vector [`Layer`].
     fn from_layer(layer: &mut Layer) -> Result<Vec<Self>, E> {
         let field_ids: Vec<Result<usize, GdalError>> = Self::FIELDS
             .into_iter()
@@ -148,7 +158,6 @@ where
 
         layer
             .features()
-            .into_iter()
             .map(|feature| {
                 let fields: [FieldResult<GdalTraitError>; N] = field_ids
                     .iter()
@@ -201,7 +210,7 @@ mod tests {
         geom: geo_types::Geometry<f64>,
     }
 
-    impl FeatureTrait<5, TestError> for Country {
+    impl FromFeature<5, TestError> for Country {
         const FIELDS: [&'static str; Self::NUM_FIELDS] =
             ["NAME", "ISO_A2", "ISO_A3", "POP_EST", "POP_YEAR"];
 
@@ -250,7 +259,7 @@ mod tests {
                 iso_a3: "SWE".to_string(),
                 pop_est: 10285453.0,
                 pop_year: 2019,
-                geom: geom
+                geom
             }
         );
     }
@@ -274,7 +283,7 @@ mod tests {
                 iso_a3: "SWE".to_string(),
                 pop_est: 10285453.0,
                 pop_year: 2019,
-                geom: geom
+                geom
             })
         );
 
@@ -289,7 +298,7 @@ mod tests {
                 iso_a3: "DNK".to_string(),
                 pop_est: 5818553.0,
                 pop_year: 2019,
-                geom: geom
+                geom
             })
         );
     }
